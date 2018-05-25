@@ -1,0 +1,15 @@
+{
+  "name": "charli-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./node_modules/charli/index.js init.ck"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "charli": "file:../charli"
+  }
+}
