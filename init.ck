@@ -4,6 +4,6 @@
 
 Patch patch;
 
-spork ~patch.play();
+spork ~ patch.play();
 
 patch.stopEvent => now;

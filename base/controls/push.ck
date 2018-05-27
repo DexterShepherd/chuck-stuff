@@ -1,81 +1,127 @@
 // require('push-grid.ck')
 // require('push-knob.ck')
 // require('push-control.ck')
+// require('push-light.ck')
+// require('push-display.ck')
 
 public class Push extends CharliMidi {
-  // TODO : Something to find the write midi port based on name
-  open(1);
+  open("Ableton Push User Port");
+
+  PushLight light;
+  PushDisplay display;
+
+  out @=> light.out;
+  out @=> display.out;
+
 
   PushGridEvent button;
   PushKnobEvent knob;
 
+  36 => int gridOffset;
+  0 => int numberControl;
+  1 => int lightGridOnPress;
+
   PushControlEvent control[0];
-  string controlEventMapping[200];
+
+  string controlEventMapping[120];
+  for( 0 => int i; i < controlEventMapping.size(); i++ ) {
+    "unset" => controlEventMapping[i];
+  }
+
+  now => time lastEvent;
 
   initializeControlEvents();
+  light.allControlLights();
 
+  welcome();
 
-  fun int handleMessage(MidiMsg m) {
-    /* logMsg(m); */
+  // TODO : implement grid aftertouch
+  fun void handleMessage(MidiMsg m) {
     if ( isKnobEvent(m) ) {
       handleKnobEvent(m);
+    } else if ( isGridEvent(m) ) {
+      handleGridEvent(m);
+    } else if ( isKnobTouchEvent(m) ) {
+      // TODO : implement knob touch
+    } else  {
+      handleControlEvent(m);
     }
-    if ( isGridEvent(m) ) {
-      return handleGridEvent(m);
-    } 
-
-    handleControlEvent(m);
   }
 
   fun int isGridEvent(MidiMsg m) {
-    return (m.data1 != 176 && m.data2 >= 36 && m.data2 < 100);
+    return (( m.data1 == 144 || m.data1 == 128 ) &&
+            m.data2 >= gridOffset &&
+            m.data2 < gridOffset + 64);
+  }
+
+  fun int isKnobTouchEvent(MidiMsg m) {
+    return ( m.data1 == 144 && m.data2 < 11 );
   }
 
   fun int isKnobEvent(MidiMsg m) {
-    return(m.data1 == 176 && msg.data2 >= 71 && m.data2 < 80);
+    return (m.data1 == 176 &&
+           ((m.data2 > 70 && m.data2 < 80) ||
+           (m.data2 == 14 || m.data2 == 15 )));
   }
 
   fun int handleKnobEvent(MidiMsg m) {
-    for( 0 => int i; i < 8; i++ ) {
-      if ( m.data2 == i + 71 ) {
-        i => knob.id;  
-        if ( m.data3 < 64 ) {
-          m.data3 => knob.change;
-        } else {
-          ( 128 - msg.data3 ) * -1 => knob.change;
-        }
-        knob.broadcast();
-        return 1;
-      }
+    m.data2 - 71 => knob.id;  
+    if ( m.data3 < 64 ) {
+      m.data3 => knob.change;
+    } else {
+      ( 128 - m.data3 ) * -1 => knob.change;
     }
+    knob.broadcast();
+    return 1;
   }
 
-  // TODO: this loop isn't needed
   fun int handleGridEvent(MidiMsg m) {
-    for ( 0 => int x; x < 8; x++ ) {
-      for ( 0 => int y; y < 8; y++ ) {
-        x + ( y * 8 ) + 36 => int index;
-        if ( m.data2 == index ) {
-          x => button.x;
-          y => button.y;
-          m.data3 => button.velocity;
-          if ( m.data1 == 144 ) {
-            1 => button.type;
-          } else if ( m.data1 == 128 ) {
-            0 => button.type;
-          } else if ( m.data1 == 160 ) {
-            2 => button.type;
-          }
-          button.broadcast();
-          return 1;
-        }
+    m.data2 - gridOffset => int index;
+    index / 8 => button.x;
+    index % 8 => button.y;
+    m.data3 => button.velocity;
+
+    index => button.index;
+
+    if ( m.data1 == 144 ) {
+      1 => button.type;
+
+      if ( lightGridOnPress ) {
+        light.set(index);
       }
+
+      button.broadcast();
+    } else if ( m.data1 == 128 ) {
+      0 => button.type;
+
+      if ( lightGridOnPress ) {
+        light.off(index);
+      }
+
+      spork ~ noteOff(index);
+      /* button.broadcast(); */
+    } else if ( m.data1 == 160 ) {
+      2 => button.type;
+    }
+
+    return 1;
+  }
+
+  
+  // hack to handle stuck notes
+  fun void noteOff(int index) {
+    for(0 => int i; i < 2; i++) {
+      1::ms => now;
+      0 => button.type;
+      index => button.index;
+      button.broadcast();
     }
   }
 
   fun int handleControlEvent(MidiMsg m) {
-    <<<controlEventMapping[m.data2]>>>;
-    control[controlEventMapping[m.data2]].broadcast();
+    if ( m.data1 == 176 ) {
+      control[controlEventMapping[m.data2]].broadcast();
+    }
   }
 
   fun int initializeControlEvents() {
@@ -129,17 +175,40 @@ public class Push extends CharliMidi {
     createAndAddEvent(63, "prev");
 
     createAndAddEvent(110, "device");
-    createAndAddEvent(110, "browse");
-    createAndAddEvent(110, "track");
-    createAndAddEvent(110, "clip");
-    createAndAddEvent(110, "volume");
-    createAndAddEvent(110, "pan-and-send");
+    createAndAddEvent(111, "browse");
+    createAndAddEvent(112, "track");
+    createAndAddEvent(113, "clip");
+    createAndAddEvent(114, "volume");
+    createAndAddEvent(115, "pan-and-send");
   }
 
   fun void createAndAddEvent(int note, string id) {
     new PushControlEvent @=> control[id];
     id => control[id].id;
     note => control[id].note;
+
     id => controlEventMapping[note];
+    note => light.controlIndexMapping[id];
+    light.controlIndex << note;
   }
+
+  fun void welcome() {
+    light.clear();
+
+    display.set([
+      "ChucK => PUSH",
+      "Dexter Shepherd",
+      "2018"
+    ]);
+
+    for(0 => int i; i < 32; i++) {
+      Math.random2(0, 64) => int index;
+      light.set(index);
+      10::ms => now;
+    }
+
+    light.clear();
+  }
+
+
 }

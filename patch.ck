@@ -1,12 +1,15 @@
 public class Patch extends CharliPatch {
   setDefaults();
-
   Push p;
-  p.debug();
+
+  PushPitchSpace pitchSpace;
+
+  PushSynth synth => track[0];
+  pitchSpace.init(p, synth.trigger);
 
   fun void play() {
     while(1) {
-      p.control["play"] => now;
+      100::ms => now;
     }
   }
 }

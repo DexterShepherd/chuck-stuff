@@ -1,10 +1,12 @@
 public class CharliPatch {
   <<<"Initializing Base Patch">>>;
+  Charli store;
+
   Gain master => Gain base => dac;
   master => WvOut masterRecorder => blackhole;
-
+  
   Scale scale;
-  BPM bpm;
+  Pattern patterns[0];
 
   Event stopEvent;
 

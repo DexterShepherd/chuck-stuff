@@ -1,6 +1,8 @@
 public class PushGridEvent extends Event {
+  time sentAt;
   int x;
   int y;
+  int index;
   int velocity;
 
   // 0: Off

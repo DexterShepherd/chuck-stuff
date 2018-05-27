@@ -22,9 +22,22 @@ public class Pattern {
     return trigger;
   }
 
+  fun Event init(string p, dur s) {
+    p => pattern;
+    s / ms => speed;
+    return trigger;
+  }
+
   fun Event init(string p, float s, float sw) {
     p => pattern;
     s => speed;
+    sw => swing;
+    return trigger;
+  }
+
+  fun Event init(string p, dur s, float sw) {
+    p => pattern;
+    s / ms => speed;
     sw => swing;
     return trigger;
   }

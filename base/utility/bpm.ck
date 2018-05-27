@@ -1,15 +1,15 @@
 public class BPM {
-  124 => int bpm;
-  bpm / 60 => float bps;
+  100 => int bpm;
+  bpm / 60.0 => float bps;
   1 / bps => float spb;
-  spb * 1000 => float mpb;
+  spb * 1000.0 => float mpb;
 
 
   fun void set(int b) {
     b => bpm;
-    bpm / 60 => bps;
-    1 / bps => spb;
-    spb * 1000 => mpb;
+    bpm / 60.0 => bps;
+    1.0 / bps => spb;
+    spb * 1000.0 => mpb;
   }
 
   fun dur bar() {
