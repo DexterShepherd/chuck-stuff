@@ -5,7 +5,7 @@ class Voice extends Chubgraph {
   0 => int busy;
   Event @ stop;
 
-  e.set(100::ms, 0::ms, 1.0, 1000::ms);
+  e.set(600::ms, 0::ms, 1.0, 2000::ms);
   
   fun void play(float f, Event st) {
     1 => busy;
@@ -18,6 +18,7 @@ class Voice extends Chubgraph {
     e.keyOn();
     stop => now;
     e.keyOff();
+    2000::ms => now;
     0 => busy;
   }
 }

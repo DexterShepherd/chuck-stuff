@@ -4,7 +4,7 @@ public class Patch extends CharliPatch {
 
   PushPitchSpace pitchSpace;
 
-  PushSynth synth => track[0];
+  SampledPolySynth synth => track[0];
   pitchSpace.init(p, synth.trigger);
 
   fun void play() {

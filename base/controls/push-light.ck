@@ -11,6 +11,16 @@ public class PushLight {
   for( 0 => int i; i < controlIndexMapping.size(); i++ ) {
     -1 => controlIndexMapping[i];
   }
+  
+  [ 3,  1,  120, 7,
+    60, 10, 13, 15,
+    21, 23, 33, 35,
+    45, 47, 49, 51,
+    53, 55 ] @=> int allColors[];
+
+  [ 3, 120, 60, 13,
+    21, 33, 34, 45,
+    49, 53, 57, 2  ] @=> int allBright[];
 
   MidiOut @ out;
   MidiMsg lightMsg;
@@ -35,14 +45,17 @@ public class PushLight {
   33 => colors["cyanbright"];
   35 => colors["cyandim"];
 
-  33 => colors["bluebright"];
-  35 => colors["bluedim"];
+  45 => colors["bluebright"];
+  47 => colors["bluedim"];
 
   49 => colors["indigobright"];
   51 => colors["indigodim"];
 
   53 => colors["violetbright"];
   55 => colors["violetdim"];
+
+  57 => colors["pinkbright"];
+  59 => colors["pinkdim"];
 
 
   fun void allControlLights() {
@@ -74,6 +87,14 @@ public class PushLight {
     spork ~ setButton(x, y, "whitebright");
   }
 
+  fun void set(int x, int y, string c) {
+    spork ~ setButton(x, y, c);
+  }
+
+  fun void set(int x, int y, int c) {
+    spork ~ setButton(x, y, c);
+  }
+
   fun void setAllButtons(string c) {
     for(0 => int i; i < 64; i++) {
       setButton(i, c);
@@ -92,6 +113,14 @@ public class PushLight {
     0x90 => lightMsg.data1;
     index + gridOffset => lightMsg.data2;
     colors[c] => lightMsg.data3;
+    out.send(lightMsg);
+  }
+
+  fun void setButton(int x, int y, int c) {
+    y + (x * 8) => int index;
+    0x90 => lightMsg.data1;
+    index + gridOffset => lightMsg.data2;
+    c => lightMsg.data3;
     out.send(lightMsg);
   }
 
